@@ -8,56 +8,56 @@ export class Settings {
   static PADDLE_W = 100;
   static PADDLE_H = 30;
 
-  static EFFECT_SCREEN_COLORS = false;
+  static EFFECT_SCREEN_COLORS = true;
 
-  static EFFECT_TWEENIN_ENABLED = false;
+  static EFFECT_TWEENIN_ENABLED = true;
   static EFFECT_TWEENIN_PROPERTY_Y = true;
-  static EFFECT_TWEENIN_PROPERTY_ROTATION = false;
-  static EFFECT_TWEENIN_PROPERTY_SCALE = false;
+  static EFFECT_TWEENIN_PROPERTY_ROTATION = true;
+  static EFFECT_TWEENIN_PROPERTY_SCALE = true;
 
   static EFFECT_TWEENIN_DELAY = 0;
   static EFFECT_TWEENIN_DURATION = 0.7;
 
   static EFFECT_TWEENIN_EQUATION = 0;
 
-  static EFFECT_PADDLE_STRETCH = false;
+  static EFFECT_PADDLE_STRETCH = true;
 
-  static EFFECT_BALL_EXTRA_SCALE = false;
-  static EFFECT_BALL_ROTATE = false;
-  static EFFECT_BALL_ROTATE_ANIMATED = false;
-  static EFFECT_BALL_STRETCH = false;
-  static EFFECT_BALL_STRETCH_ANIMATED = false;
+  static EFFECT_BALL_EXTRA_SCALE = true;
+  static EFFECT_BALL_ROTATE = true;
+  static EFFECT_BALL_ROTATE_ANIMATED = true;
+  static EFFECT_BALL_STRETCH = true;
+  static EFFECT_BALL_STRETCH_ANIMATED = true;
   static EFFECT_BALL_GLOW = true;
 
   static BALL_GRAVITY = 0;
 
-  static EFFECT_BLOCK_JELLY = false;
-  static EFFECT_BOUNCY_LINES_ENABLED = false;
+  static EFFECT_BLOCK_JELLY = true;
+  static EFFECT_BOUNCY_LINES_ENABLED = true;
 
   static SOUND_WALL = false;
   static SOUND_BLOCK = false;
   static SOUND_PADDLE = false;
   static SOUND_MUSIC = false;
 
-  static EFFECT_PARTICLE_BALL_COLLISION = false;
+  static EFFECT_PARTICLE_BALL_COLLISION = true;
 
   static EFFECT_BLOCK_DESTRUCTION_DURATION = 2;
-  static EFFECT_BLOCK_SCALE = false;
-  static EFFECT_BLOCK_GRAVITY = false;
-  static EFFECT_BLOCK_PUSH = false;
-  static EFFECT_BLOCK_ROTATE = false;
-  static EFFECT_BLOCK_DARKEN = false;
+  static EFFECT_BLOCK_SCALE = true;
+  static EFFECT_BLOCK_GRAVITY = true;
+  static EFFECT_BLOCK_PUSH = true;
+  static EFFECT_BLOCK_ROTATE = true;
+  static EFFECT_BLOCK_DARKEN = true;
   static EFFECT_BLOCK_SHATTER = true;
 
-  static EFFECT_PARTICLE_BLOCK_SHATTER = false;
-  static EFFECT_PARTICLE_PADDLE_COLLISION = false;
+  static EFFECT_PARTICLE_BLOCK_SHATTER = true;
+  static EFFECT_PARTICLE_PADDLE_COLLISION = true;
 
   static EFFECT_BALL_TRAIL = true;
 
   static EFFECT_BALL_TRAIL_SCALE = true;
   static EFFECT_BALL_TRAIL_LENGTH = 30;
 
-  static EFFECT_SCREEN_SHAKE = false;
+  static EFFECT_SCREEN_SHAKE = true;
 
   static EFFECT_SCREEN_SHAKE_POWER = 0.5;
 
@@ -69,8 +69,8 @@ export class Settings {
 
   static EFFECT_FREEZE_FADE_OUT_MS = 0;
 
-  static EFFECT_PADDLE_FACE = false;
-  static EFFECT_PADDLE_LOOK_AT_BALL = false;
+  static EFFECT_PADDLE_FACE = true;
+  static EFFECT_PADDLE_LOOK_AT_BALL = true;
 
   static EFFECT_PADDLE_SMILE = 0;
 
@@ -78,8 +78,8 @@ export class Settings {
 
   static EFFECT_PADDLE_EYE_SEPARATION = 25;
 
-  static EFFECT_SCREEN_COLOR_GLITCH = false;
-  static POWERUP_SLICER_BALL = false;
+  static EFFECT_SCREEN_COLOR_GLITCH = true;
+  static POWERUP_SLICER_BALL = true;
 
   static NUM_BALLS = 1;
 

@@ -6,6 +6,7 @@ import { Ball } from "./ball";
 import { Freezer } from "../freeezer";
 import { JuicyEvent } from "../events/juicy-events";
 import gsap from "gsap";
+import { Utils } from "../utils/math/math-util";
 
 export class Block extends GameObject {
   private _renderer: Renderer;
@@ -133,7 +134,11 @@ export class Block extends GameObject {
       delayDestruction = true;
     }
 
-    this.emit(JuicyEvent.BLOCK_DESTROYED, new JuicyEvent(ball, this));
+    Utils.emitBubblingEvent(
+      this,
+      JuicyEvent.BLOCK_DESTROYED,
+      new JuicyEvent(ball, this),
+    );
     // if no animation is used, remove instantly
     if (!delayDestruction) {
       this.remove();

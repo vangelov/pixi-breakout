@@ -1,167 +1,459 @@
 import {
   Application,
+  ColorMatrixFilter,
   Container,
-  Geometry,
   Graphics,
-  Matrix,
-  Mesh,
-  MeshGeometry,
   Point,
-  Polygon,
-  Rectangle,
-  RenderTexture,
-  Shader,
-  Sprite,
-  Texture,
 } from "pixi.js";
-import { Rainbow } from "./effects/rainbow";
-import { Ball } from "./gameobjects/ball";
+import { GameObjectCollection } from "./general/collections/game-object-collection";
+import { Timestep } from "./general/timestep";
+import { Shaker } from "./shaker";
+import { Paddle } from "./gameobjects/paddle";
+import { JuicyEvent } from "./events/juicy-events";
+import { Settings } from "./settings";
 import { Block } from "./gameobjects/block";
+import { BouncyLine } from "./effects/bouncy-line";
+import { Ball } from "./gameobjects/ball";
+import { Freezer } from "./freeezer";
 
-// Create a new application
+export class Main extends Container {
+  private _app: Application;
+
+  private _blocks: GameObjectCollection;
+  private _balls: GameObjectCollection;
+  private _lines: GameObjectCollection;
+  private _timestep: Timestep;
+  private _screenshake: Shaker;
+
+  private _paddle: Paddle;
+
+  //   //   private _particles_impact: ParticlePool;
+  //   //   private _particles_shatter: ParticlePool;
+  //   //   private _particles_confetti: ParticlePool;
+
+  private _mouseDown: boolean;
+  private _mouseVector: Point;
+
+  //   //private _toggler: Toggler;
+
+  private _backgroundGlitchForce: number;
+  private _soundBlockHitCounter: number;
+  private _soundLastTimeHit: number;
+
+  //private _keyboard: LazyKeyboard;
+  //private _slides: Slides;
+  private _background: Graphics;
+  private _useColors: boolean;
+  //private _preload: TXT;
+
+  private mouseX = 0;
+  private mouseY = 0;
+
+  constructor(app: Application) {
+    super();
+    // SoundManager.init();
+    // SoundManager.soundControl.addEventListener(Event.INIT, handleInit);
+    // _preload = new TXT();
+    // _preload.setText("Loading sounds...");
+    // addChild(_preload);
+
+    this._app = app;
+
+    setTimeout(() => {
+      this.handleInit();
+    }, 500);
+  }
+
+  private async handleInit() {
+    this._app.stage.on("pointermove", (e) => {
+      this.mouseX = e.global.x;
+      this.mouseY = e.global.y;
+    });
+    this._app.stage.on("pointerdown", this.handleMouseToggle);
+    this._app.stage.on("pointerup", this.handleMouseToggle);
+
+    // removeChild(_preload);
+
+    // _particles_confetti = new ParticlePool(ConfettiParticle);
+    // addChild(_particles_confetti);
+
+    this._blocks = new GameObjectCollection();
+    this._blocks.addEventListener(
+      JuicyEvent.BLOCK_DESTROYED,
+      this.handleBlockDestroyed,
+    );
+    this.addChild(this._blocks);
+
+    // we want to draw these under the ball, that's why it's added here
+    this._lines = new GameObjectCollection();
+    this.addChild(this._lines);
+
+    this._balls = new GameObjectCollection();
+    this._balls.on(JuicyEvent.BALL_COLLIDE, this.handleBallCollide);
+    this.addChild(this._balls);
+
+    // _particles_impact = new ParticlePool(BallImpactParticle);
+    // addChild(_particles_impact);
+
+    // _particles_shatter = new ParticlePool(BlockShatterParticle);
+    // addChild(_particles_shatter);
+
+    app.ticker.add(this.handleEnterFrame);
+    // stage.addEventListener(KeyboardEvent.KEY_DOWN, handleKeyDown);
+    // stage.addEventListener(MouseEvent.MOUSE_DOWN, handleMouseToggle);
+    // stage.addEventListener(MouseEvent.MOUSE_UP, handleMouseToggle);
+
+    this._timestep = new Timestep();
+    this._timestep.gameSpeed = 1;
+
+    this._mouseVector = new Point();
+
+    this._screenshake = new Shaker(this);
+
+    this._background = new Graphics();
+    if (this.parent) this.parent.addChildAt(this._background, 0);
+
+    // _toggler = new Toggler(Settings);
+    // parent.addChild(_toggler);
+
+    // _slides = new Slides();
+    // _slides.visible = false;
+    // parent.addChild(_slides);
+
+    //_keyboard = new LazyKeyboard(stage);
+
+    this.updateColorUse();
+
+    this.reset();
+  }
+
+  drawBackground() {
+    this._background.clear();
+    this._background.rect(5, 5, Settings.STAGE_W - 10, Settings.STAGE_H);
+
+    if (
+      Settings.EFFECT_SCREEN_COLOR_GLITCH &&
+      this._backgroundGlitchForce > 0.01
+    ) {
+      console.log("g");
+      this._background.fill(
+        ((Settings.COLOR_BACKGROUND * (3 * Math.random())) >>> 0) & 0xffffff,
+      );
+      this._backgroundGlitchForce *= 0.8;
+    } else {
+      this._background.fill(Settings.COLOR_BACKGROUND);
+    }
+  }
+
+  updateColorUse() {
+    if (Settings.EFFECT_SCREEN_COLORS) {
+      this.filters = null;
+      this._background.filters = null;
+    } else {
+      const filter = new ColorMatrixFilter();
+
+      // approximate "add white"
+      filter.matrix = [
+        1, 0, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0,
+      ];
+
+      this.filters = [filter];
+
+      const bgFilter = new ColorMatrixFilter();
+      bgFilter.matrix = [
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
+      ];
+
+      this._background.filters = [bgFilter];
+    }
+
+    this._useColors = Settings.EFFECT_SCREEN_COLORS;
+  }
+
+  reset() {
+    this._soundBlockHitCounter = 0;
+    this.drawBackground();
+
+    this._blocks.clear();
+    this._balls.clear();
+    this._lines.clear();
+
+    // this._particles_impact.clear();
+
+    for (let j = 0; j < Settings.NUM_BALLS; j++) {
+      this.addBall();
+    }
+
+    for (let i = 0; i < 80; i++) {
+      const block = new Block(
+        app.renderer,
+        120 + (i % 10) * (Settings.BLOCK_W + 10),
+        30 + 47.5 + Math.trunc(i / 10) * (Settings.BLOCK_H + 10),
+      );
+      this._blocks.add(block);
+    }
+
+    const buffer = Settings.EFFECT_BOUNCY_LINES_DISTANCE_FROM_WALLS;
+    this._lines.add(
+      new BouncyLine(buffer, buffer, Settings.STAGE_W - buffer, buffer),
+    );
+    this._lines.add(new BouncyLine(buffer, buffer, buffer, Settings.STAGE_H));
+    this._lines.add(
+      new BouncyLine(
+        Settings.STAGE_W - buffer,
+        buffer,
+        Settings.STAGE_W - buffer,
+        Settings.STAGE_H,
+      ),
+    );
+
+    this._paddle = new Paddle(app.renderer);
+    this._blocks.add(this._paddle);
+  }
+
+  isColliding(ball: Ball, block: Block) {
+    return (
+      ball.x > block.x - block.collisionW / 2 &&
+      ball.x < block.x + block.collisionW / 2 &&
+      ball.y > block.y - block.collisionH / 2 &&
+      ball.y < block.y + block.collisionH / 2
+    );
+  }
+
+  handleMouseToggle = (e: MouseEvent) => {
+    this._mouseDown = e.type == "pointerdown";
+  };
+
+  handleEnterFrame = () => {
+    this._timestep.tick();
+
+    this._soundLastTimeHit++;
+
+    if (Settings.EFFECT_SCREEN_COLORS !== this._useColors) {
+      this.updateColorUse();
+    }
+
+    // if (!Settings.SOUND_MUSIC) {
+    //   SoundManager.soundControl.stopSound("music-0");
+    // } else if (!SoundManager.soundControl.getSound("music-0").isPlaying) {
+    //   SoundManager.play("music");
+    // }
+
+    // if (_keyboard.keyIsDown(Keyboard.CONTROL) || _slides.visible) {
+    // 			_timestep.gameSpeed = 0;
+    // 		} else if (_keyboard.keyIsDown(Keyboard.SHIFT)) {
+    // 			_timestep.gameSpeed = .1;
+    // 		} else {
+    // 			_timestep.gameSpeed = 1;
+    // 		}
+
+    this._timestep.gameSpeed *= Freezer.multiplier;
+
+    //GTween.timeScaleAll = _timestep.gameSpeed;
+
+    this.drawBackground();
+
+    this._balls.update(this._timestep.timeDelta);
+    this._blocks.update(this._timestep.timeDelta);
+    this._lines.update(this._timestep.timeDelta);
+    this._screenshake.update(this._timestep.timeDelta);
+
+    if (this._balls.collection.length)
+      this._paddle.lookAt(this._balls.collection[0] as Ball);
+
+    if (Settings.EFFECT_PADDLE_STRETCH) {
+      this._paddle.scale.x = 1 + Math.abs(this._paddle.x - this.mouseX) / 100;
+      this._paddle.scale.y = 1.5 - this._paddle.scale.x * 0.5;
+    } else {
+      this._paddle.scale.x = this._paddle.scale.y = 1;
+    }
+    this._paddle.x = this.mouseX;
+
+    const screen_buffer =
+      0.5 * Settings.EFFECT_BOUNCY_LINES_WIDTH +
+      Settings.EFFECT_BOUNCY_LINES_DISTANCE_FROM_WALLS;
+    for (const ball of this._balls.collection as Array<Ball>) {
+      if (ball.x < screen_buffer && ball.velocityX < 0) ball.collide(-1, 1);
+      if (ball.x > Settings.STAGE_W - screen_buffer && ball.velocityX > 0)
+        ball.collide(-1, 1);
+      if (ball.y < screen_buffer && ball.velocityY < 0) ball.collide(1, -1);
+      if (ball.y > Settings.STAGE_H && ball.velocityY > 0) ball.collide(1, -1);
+
+      ball.velocityY +=
+        (Settings.BALL_GRAVITY / 100) * this._timestep.timeDelta;
+
+      // line ball collision
+      for (const line of this._lines.collection as Array<BouncyLine>) {
+        line.checkCollision(ball);
+      }
+
+      if (this._mouseDown) {
+        this._mouseVector.x =
+          (ball.x - this.mouseX) *
+          Settings.MOUSE_GRAVITY_POWER *
+          this._timestep.timeDelta;
+        this._mouseVector.y =
+          (ball.y - this.mouseY) *
+          Settings.MOUSE_GRAVITY_POWER *
+          this._timestep.timeDelta;
+        if (this._mouseVector.magnitude() > Settings.MOUSE_GRAVITY_MAX)
+          this._mouseVector
+            .normalize()
+            .multiplyScalar(Settings.MOUSE_GRAVITY_MAX, this._mouseVector);
+
+        ball.velocityX -= this._mouseVector.x;
+        ball.velocityY -= this._mouseVector.y;
+      }
+
+      // hard limit for min vel
+      if (ball.velocity < Settings.BALL_MIN_VELOCITY) {
+        ball.velocity = Settings.BALL_MIN_VELOCITY;
+      }
+
+      // soft limit for max vel
+      if (ball.velocity > Settings.BALL_MAX_VELOCITY) {
+        ball.velocity -=
+          ball.velocity *
+          Settings.BALL_VELOCITY_LOSS *
+          this._timestep.timeDelta;
+      }
+
+      for (const block of this._blocks.collection as Array<Block>) {
+        // check for collisions
+        if (block.collidable && this.isColliding(ball, block)) {
+          // back the ball out of the block
+          const v = new Point(ball.velocityX, ball.velocityY);
+          v.normalize().multiplyScalar(2, v);
+          while (this.isColliding(ball, block)) {
+            ball.x -= v.x;
+            ball.y -= v.y;
+          }
+
+          block.collide(ball);
+
+          // figure out which way to bounce
+
+          // slicer powerup
+          if (Settings.POWERUP_SLICER_BALL && !(block instanceof Paddle))
+            ball.collide(1, 1, block);
+          // top
+          else if (
+            ball.y <= block.y - block.collisionH / 2 &&
+            ball.velocityY > 0
+          )
+            ball.collide(1, -1, block);
+          // bottom
+          else if (
+            ball.y >= block.y + block.collisionH / 2 &&
+            ball.velocityY < 0
+          )
+            ball.collide(1, -1, block);
+          // left
+          else if (ball.x <= block.x - block.collisionW / 2)
+            ball.collide(-1, 1, block);
+          // right
+          else if (ball.x >= block.x + block.collisionW / 2)
+            ball.collide(-1, 1, block);
+          // wtf!
+          else ball.collide(-1, -1, block);
+
+          break; // only collide with one block per update
+        }
+      }
+    }
+  };
+
+  handleBlockDestroyed = () => {
+    if (Settings.EFFECT_PARTICLE_BLOCK_SHATTER) {
+      //   ParticleSpawn.burst(
+      //     e.ball.x,
+      //     e.ball.y,
+      //     5,
+      //     45,
+      //     (-Math.atan2(e.ball.velocityX, e.ball.velocityY) * 180) / Math.PI,
+      //     50 + e.ball.velocity * 10,
+      //     0.5,
+      //     _particles_shatter,
+      //   );
+    }
+  };
+
+  handleBallCollide = (e: JuicyEvent) => {
+    if (e.block != null && e.block !== this._paddle)
+      this._backgroundGlitchForce = 0.05;
+
+    if (Settings.EFFECT_PARTICLE_BALL_COLLISION) {
+      //   ParticleSpawn.burst(
+      //     e.ball.x,
+      //     e.ball.y,
+      //     5,
+      //     90,
+      //     (-Math.atan2(e.ball.velocityX, e.ball.velocityY) * 180) / Math.PI,
+      //     e.ball.velocity * 5,
+      //     0.5,
+      //     _particles_impact,
+      //   );
+    }
+
+    if (Settings.EFFECT_SCREEN_SHAKE && e.ball)
+      this._screenshake.shake(
+        -e.ball.velocityX * Settings.EFFECT_SCREEN_SHAKE_POWER,
+        -e.ball.velocityY * Settings.EFFECT_SCREEN_SHAKE_POWER,
+      );
+
+    if (Settings.EFFECT_BLOCK_JELLY) {
+      for (const block of this._blocks.collection as Array<Block>) {
+        //var dist:Number = block.getDistance(e.ball);
+        //dist = dist / Settings.STAGE_W;
+        //dist = MathUtil.clamp(dist, 1, 0) * .2;
+        block.jellyEffect(0.2, Math.random() * 0.02);
+      }
+    }
+
+    if (e.ball) e.ball.velocity = Settings.BALL_MAX_VELOCITY;
+
+    // wall collision
+    if (e.block instanceof Paddle) {
+      // if (Settings.SOUND_PADDLE) SoundManager.play("ball-paddle");
+
+      if (Settings.EFFECT_PARTICLE_PADDLE_COLLISION) {
+        // ParticleSpawn.burst(
+        //   e.ball.x,
+        //   e.ball.y,
+        //   20,
+        //   90,
+        //   -180,
+        //   600,
+        //   1,
+        //   _particles_confetti,
+        // );
+      }
+    } else if (e.block) {
+      // SoundManager.play("ball-block");
+      this._soundBlockHitCounter++;
+
+      if (this._soundLastTimeHit > 60) this._soundBlockHitCounter = 0;
+
+      this._soundLastTimeHit = 0;
+      //if (Settings.SOUND_BLOCK)
+      // SoundManager.playSoundId("ball-block", _soundBlockHitCounter);
+    } else {
+      //if (Settings.SOUND_WALL) SoundManager.play("ball-wall");
+    }
+  };
+
+  addBall(): void {
+    this._balls.add(new Ball(Settings.STAGE_W / 2, Settings.STAGE_H / 2 + 100));
+  }
+}
+
 const app = new Application();
+app.stage.eventMode = "static";
 
-// Initialize the application
 await app.init({
   resizeTo: window,
 });
 
-// Append the application canvas to the document body
 document.getElementById("pixi-container")!.appendChild(app.canvas);
 
-// const r = new Rainbow();
-// app.stage.addChild(r);
-
-// r.addSegment(0, 0);
-// r.addSegment(50, 50);
-// r.addSegment(70, 300);
-
-// r.addSegment(500, 800);
-
-// r.redrawSegments(0, 0);
-
-// const g = new Graphics();
-// g.moveTo(0, 0);
-// g.lineTo(50, 50);
-// g.lineTo(70, 300);
-// g.lineTo(500, 800);
-// g.stroke({ width: 3, color: "red" });
-// app.stage.addChild(g);
-
-// const b = new Ball(100, 100);
-// b.velocityX = 10;
-// b.velocityY = 0;
-
-// app.stage.addChild(b);
-
-// app.ticker.add(({ deltaTime }) => {
-//   //b.update(deltaTime);
-// });
-
-// setTimeout(() => {
-//   console.log("do");
-//   b.doCollisionEffects(null);
-// }, 3000);
-
-const block = new Block(app.renderer, 200, 100);
-app.stage.addChild(block);
-
-const ball = new Ball(0, 500);
-app.stage.addChild(ball);
-
-ball.velocityY = -10 / 4;
-ball.velocityX = 5.5 / 4;
-//block.collide(ball);
-
-function isColliding(ball: Ball, block: Block) {
-  return (
-    ball.x > block.x - block.collisionW / 2 &&
-    ball.x < block.x + block.collisionW / 2 &&
-    ball.y > block.y - block.collisionH / 2 &&
-    ball.y < block.y + block.collisionH / 2
-  );
-}
-
-app.ticker.add(({ deltaTime }) => {
-  ball.update(deltaTime);
-  block.update(deltaTime);
-
-  if (block.collidable && isColliding(ball, block)) {
-    const v = new Point(ball.velocityX, ball.velocityY);
-
-    v.normalize().multiplyScalar(2, v);
-
-    while (isColliding(ball, block)) {
-      ball.x -= v.x;
-      ball.y -= v.y;
-    }
-
-    block.collide(ball);
-  }
-});
-
-const b = new Container();
-const _gfx = new Graphics();
-
-_gfx.rect(-25, -10, 50, 20);
-_gfx.fill({ color: "red" });
-
-_gfx.scale.set(3);
-
-b.addChild(_gfx);
-b.x = 60;
-b.y = 60;
-app.stage.addChild(b);
-
-const source = _gfx;
-const globalBounds = source.getBounds();
-const localBounds = source.getLocalBounds();
-
-const rt = RenderTexture.create({
-  width: Math.ceil(globalBounds.width),
-  height: Math.ceil(globalBounds.height),
-});
-
-const t = new Matrix();
-t.translate(-localBounds.minX, -localBounds.minY);
-t.rotate(source.rotation);
-t.scale(source.scale.x, source.scale.y);
-
-app.renderer.render({
-  container: source,
-  target: rt,
-  transform: t,
-
-  clear: true,
-});
-
-const points = [
-  new Point(0, 0),
-  new Point(rt.width, 0),
-  new Point(rt.width, rt.height),
-  new Point(0, rt.height),
-];
-
-const offset = new Point(
-  localBounds.minX * source.scale.x,
-  localBounds.minY * source.scale.y,
-);
-
-for (let i = 0; i < points.length; i++) {
-  points[i] = points[i].add(offset);
-}
-
-const g2 = new Graphics();
-g2.clear();
-g2.y = 100;
-g2.moveTo(points[0].x, points[0].y);
-for (let i = 1; i < points.length; i++) {
-  g2.lineTo(points[i].x, points[i].y);
-}
-g2.closePath();
-
-g2.fill({
-  texture: rt,
-});
-
-b.addChild(g2);
+app.stage.addChild(new Main(app));

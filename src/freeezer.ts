@@ -1,3 +1,44 @@
+import { Settings } from "./settings";
+import { Utils } from "./utils/math/math-util";
+
 export class Freezer {
-  static freeze() {}
+  private static frozeAt: number;
+
+  public static freeze(): void {
+    this.frozeAt = Utils.getTimer();
+  }
+
+  public static get multiplier() {
+    let time = Utils.getTimer() - this.frozeAt;
+
+    if (time < Settings.EFFECT_FREEZE_FADE_IN_MS) {
+      return this.lerp(
+        1,
+        Settings.EFFECT_FREEZE_SPEED_MULTIPLIER,
+        time / Settings.EFFECT_FREEZE_FADE_IN_MS,
+      );
+    }
+
+    time -= Settings.EFFECT_FREEZE_FADE_IN_MS;
+
+    if (time < Settings.EFFECT_FREEZE_DURATION_MS) {
+      return Settings.EFFECT_FREEZE_SPEED_MULTIPLIER;
+    }
+
+    time -= Settings.EFFECT_FREEZE_DURATION_MS;
+
+    if (time < Settings.EFFECT_FREEZE_FADE_OUT_MS) {
+      return this.lerp(
+        Settings.EFFECT_FREEZE_SPEED_MULTIPLIER,
+        1,
+        time / Settings.EFFECT_FREEZE_FADE_OUT_MS,
+      );
+    }
+
+    return 1;
+  }
+
+  private static lerp(start: number, end: number, f: number) {
+    return start + (end - start) * f;
+  }
 }

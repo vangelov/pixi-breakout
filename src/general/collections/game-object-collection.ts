@@ -8,6 +8,7 @@ export class GameObjectCollection extends Sprite {
   constructor() {
     super();
     this._collection = new Array<GameObject>();
+    this.on(GameObjectEvent.REMOVE, this.handleRemove);
   }
 
   handleRemove = (e: GameObjectEvent) => {
@@ -41,14 +42,12 @@ export class GameObjectCollection extends Sprite {
 
   add(go: GameObject) {
     this._collection.push(go);
-    go.on(GameObjectEvent.REMOVE, this.handleRemove);
     this.addChild(go);
     return go;
   }
 
   addAt(go: GameObject, index: number) {
     this._collection.splice(index - 1, 0, go);
-    go.on(GameObjectEvent.REMOVE, this.handleRemove);
     this.addChild(go);
     return go;
   }

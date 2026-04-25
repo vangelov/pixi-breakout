@@ -1,8 +1,9 @@
-import { Container } from "pixi.js";
+import { Sprite } from "pixi.js";
 import { GameObjectEvent } from "../events/game-object-event";
 import { GameObjectCollection } from "../collections/game-object-collection";
+import { Utils } from "../../utils/math/math-util";
 
-export class GameObject extends Container {
+export class GameObject extends Sprite {
   velocityX = 0;
   velocityY = 0;
 
@@ -20,7 +21,11 @@ export class GameObject extends Container {
 
   remove() {
     this._flagged_for_removal = true;
-    this.emit(GameObjectEvent.REMOVE, new GameObjectEvent(this, null));
+    Utils.emitBubblingEvent(
+      this,
+      GameObjectEvent.REMOVE,
+      new GameObjectEvent(this, null),
+    );
     if (this._auto_remove) this.handleRemoveComplete();
   }
 
@@ -29,7 +34,11 @@ export class GameObject extends Container {
   }
 
   handleDetach(collection: GameObjectCollection): void {
-    this.emit(GameObjectEvent.DETACH, new GameObjectEvent(this, collection));
+    Utils.emitBubblingEvent(
+      this,
+      GameObjectEvent.DETACH,
+      new GameObjectEvent(this, collection),
+    );
   }
 
   getDistance(other: GameObject) {

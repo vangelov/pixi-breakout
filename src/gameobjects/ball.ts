@@ -2,7 +2,7 @@ import { ColorMatrixFilter, Graphics, Point } from "pixi.js";
 import { Rainbow } from "../effects/rainbow";
 import { GameObject } from "../general/gameobjects/game-object";
 import { Settings } from "../settings";
-import { MathUtil } from "../utils/math/math-util";
+import { Utils } from "../utils/math/math-util";
 import { Block } from "./block";
 import gsap from "gsap";
 import { JuicyEvent } from "../events/juicy-events";
@@ -24,6 +24,7 @@ export class Ball extends GameObject {
 
   private _tween_brightness: gsap.core.Tween | null = null;
   private _tween_brightnesProxy = { value: 0 };
+  private _brightnessFilter: ColorMatrixFilter | null = null;
 
   exX = 0;
   exY = 0;
@@ -130,11 +131,11 @@ export class Ball extends GameObject {
         );
       } else if (Settings.EFFECT_BALL_STRETCH_ANIMATED) {
         let relative = 1.0 + this.velocity / (2 * Settings.BALL_MAX_VELOCITY);
-        relative = MathUtil.clamp(relative, 2.5, 1.0);
+        relative = Utils.clamp(relative, 2.5, 1.0);
 
         this._gfx.scale.set(
-          MathUtil.clamp(1.0 * relative - this._ball_shakiness, 1.35, 0.85),
-          MathUtil.clamp(1.0 / relative + this._ball_shakiness, 1.35, 0.85),
+          Utils.clamp(1.0 * relative - this._ball_shakiness, 1.35, 0.85),
+          Utils.clamp(1.0 / relative + this._ball_shakiness, 1.35, 0.85),
         );
       }
     } else {
@@ -163,13 +164,22 @@ export class Ball extends GameObject {
   }
 
   doCollisionEffects(block: Block | null = null) {
-    this.emit(JuicyEvent.BALL_COLLIDE, new JuicyEvent(this, block));
+    Utils.emitBubblingEvent(
+      this,
+      JuicyEvent.BALL_COLLIDE,
+      new JuicyEvent(this, block),
+    );
 
     this._ball_shakiness = 0.1;
     this._ball_shakiness_vel = 2.5;
     this._ball_extra_scale += 1.5;
 
     if (Settings.EFFECT_BALL_GLOW) {
+      if (!this._brightnessFilter) {
+        this._brightnessFilter = new ColorMatrixFilter();
+        this.filters = [this._brightnessFilter];
+      }
+
       if (!this._tween_brightness)
         this._tween_brightness = gsap.to(this._tween_brightnesProxy, {
           value: 0,
@@ -177,28 +187,28 @@ export class Ball extends GameObject {
           ease: "back.out",
           paused: true,
           onUpdate: () => {
-            console.log("update", this._tween_brightnesProxy.value);
             // prettier-ignore
-            brightnessFilter.matrix = [
-              1, 0, 0, 0, this._tween_brightnesProxy.value,
-              0, 1, 0, 0, this._tween_brightnesProxy.value,
-              0, 0, 1, 0, this._tween_brightnesProxy.value,
-              0, 0, 0, 1, 0
-            ];
+            if (this._brightnessFilter) {
+                // prettier-ignore
+                this._brightnessFilter.matrix = [
+                    1, 0, 0, 0, this._tween_brightnesProxy.value,
+                    0, 1, 0, 0, this._tween_brightnesProxy.value,
+                    0, 0, 1, 0, this._tween_brightnesProxy.value,
+                    0, 0, 0, 1, 0
+                ];
+            }
           },
         });
 
       this._tween_brightnesProxy.value = 1;
 
-      const brightnessFilter = new ColorMatrixFilter();
       // prettier-ignore
-      brightnessFilter.matrix = [
+      this._brightnessFilter.matrix = [
         1, 0, 0, 0, this._tween_brightnesProxy.value,
         0, 1, 0, 0, this._tween_brightnesProxy.value,
         0, 0, 1, 0, this._tween_brightnesProxy.value,
         0, 0, 0, 1, 0
       ];
-      this.filters = [brightnessFilter];
 
       this._tween_brightness.invalidate().restart();
     }
@@ -213,7 +223,6 @@ export class Ball extends GameObject {
     this.velocityY *= velocityMultiplierY;
     this.doCollisionEffects(block);
   }
-
   collideSet(
     newVelocityX: number,
     newVelocityY: number,
