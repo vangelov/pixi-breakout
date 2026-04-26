@@ -15,6 +15,10 @@ import { Block } from "./gameobjects/block";
 import { BouncyLine } from "./effects/bouncy-line";
 import { Ball } from "./gameobjects/ball";
 import { Freezer } from "./freeezer";
+import { ParticlePool } from "./general/particles/particle-pool";
+import { BallImpactParticle } from "./effects/particles/ball-impact-particle";
+import { BlockShatterParticle } from "./effects/particles/block-shatter-particle";
+import { ParticleSpawn } from "./general/particles/particle-spawn";
 
 export class Main extends Container {
   private _app: Application;
@@ -27,9 +31,8 @@ export class Main extends Container {
 
   private _paddle: Paddle;
 
-  //   //   private _particles_impact: ParticlePool;
-  //   //   private _particles_shatter: ParticlePool;
-  //   //   private _particles_confetti: ParticlePool;
+  private _particles_impact: ParticlePool;
+  private _particles_shatter: ParticlePool;
 
   private _mouseDown: boolean;
   private _mouseVector: Point;
@@ -78,10 +81,7 @@ export class Main extends Container {
     // addChild(_particles_confetti);
 
     this._blocks = new GameObjectCollection();
-    this._blocks.addEventListener(
-      JuicyEvent.BLOCK_DESTROYED,
-      this.handleBlockDestroyed,
-    );
+    this._blocks.on(JuicyEvent.BLOCK_DESTROYED, this.handleBlockDestroyed);
     this.addChild(this._blocks);
 
     // we want to draw these under the ball, that's why it's added here
@@ -92,11 +92,11 @@ export class Main extends Container {
     this._balls.on(JuicyEvent.BALL_COLLIDE, this.handleBallCollide);
     this.addChild(this._balls);
 
-    // _particles_impact = new ParticlePool(BallImpactParticle);
-    // addChild(_particles_impact);
+    this._particles_impact = new ParticlePool(BallImpactParticle);
+    this.addChild(this._particles_impact);
 
-    // _particles_shatter = new ParticlePool(BlockShatterParticle);
-    // addChild(_particles_shatter);
+    this._particles_shatter = new ParticlePool(BlockShatterParticle);
+    this.addChild(this._particles_shatter);
 
     app.ticker.add(this.handleEnterFrame);
     // stage.addEventListener(KeyboardEvent.KEY_DOWN, handleKeyDown);
@@ -363,18 +363,18 @@ export class Main extends Container {
     }
   };
 
-  handleBlockDestroyed = () => {
-    if (Settings.EFFECT_PARTICLE_BLOCK_SHATTER) {
-      //   ParticleSpawn.burst(
-      //     e.ball.x,
-      //     e.ball.y,
-      //     5,
-      //     45,
-      //     (-Math.atan2(e.ball.velocityX, e.ball.velocityY) * 180) / Math.PI,
-      //     50 + e.ball.velocity * 10,
-      //     0.5,
-      //     _particles_shatter,
-      //   );
+  handleBlockDestroyed = (e: JuicyEvent) => {
+    if (Settings.EFFECT_PARTICLE_BLOCK_SHATTER && e.ball) {
+      ParticleSpawn.burst(
+        e.ball.x,
+        e.ball.y,
+        5,
+        45,
+        (-Math.atan2(e.ball.velocityX, e.ball.velocityY) * 180) / Math.PI,
+        50 + e.ball.velocity * 10,
+        0.5,
+        this._particles_shatter,
+      );
     }
   };
 
@@ -382,17 +382,17 @@ export class Main extends Container {
     if (e.block != null && e.block !== this._paddle)
       this._backgroundGlitchForce = 0.05;
 
-    if (Settings.EFFECT_PARTICLE_BALL_COLLISION) {
-      //   ParticleSpawn.burst(
-      //     e.ball.x,
-      //     e.ball.y,
-      //     5,
-      //     90,
-      //     (-Math.atan2(e.ball.velocityX, e.ball.velocityY) * 180) / Math.PI,
-      //     e.ball.velocity * 5,
-      //     0.5,
-      //     _particles_impact,
-      //   );
+    if (Settings.EFFECT_PARTICLE_BALL_COLLISION && e.ball) {
+      ParticleSpawn.burst(
+        e.ball.x,
+        e.ball.y,
+        5,
+        90,
+        (-Math.atan2(e.ball.velocityX, e.ball.velocityY) * 180) / Math.PI,
+        e.ball.velocity * 5,
+        0.5,
+        this._particles_impact,
+      );
     }
 
     if (Settings.EFFECT_SCREEN_SHAKE && e.ball)
@@ -416,7 +416,7 @@ export class Main extends Container {
     if (e.block instanceof Paddle) {
       // if (Settings.SOUND_PADDLE) SoundManager.play("ball-paddle");
 
-      if (Settings.EFFECT_PARTICLE_PADDLE_COLLISION) {
+      if (Settings.EFFECT_PARTICLE_PADDLE_COLLISION && e.ball) {
         // ParticleSpawn.burst(
         //   e.ball.x,
         //   e.ball.y,
@@ -442,7 +442,7 @@ export class Main extends Container {
     }
   };
 
-  addBall(): void {
+  addBall() {
     this._balls.add(new Ball(Settings.STAGE_W / 2, Settings.STAGE_H / 2 + 100));
   }
 }

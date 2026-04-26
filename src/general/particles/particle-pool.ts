@@ -1,42 +1,39 @@
-import { Container } from "pixi.js";
+import { Sprite } from "pixi.js";
+import { ObjectPool } from "../object-pool";
+import { ParticleEvent } from "./events/particle-event";
+import { Particle } from "./particle";
 
-	/**
-	 * ...
-	 * @author Martin Jonasson
-	 */
-	export class ParticlePool extends Container {
+export class ParticlePool extends Sprite {
+  private _particleclass: new () => Particle;
+  private _pool: ObjectPool;
 
-		private  _particleclass	:Class;
-		private  _pool			:ObjectPool;
+  constructor(particleClass: new () => Particle, size = 20) {
+    super();
+    this._particleclass = particleClass;
+    this._pool = new ObjectPool(true);
+    this._pool.allocate(this._particleclass, size);
+    this._pool.initialize("reset", []);
 
-		public function ParticlePool(particleClass:Class, size:int = 20) {
-			_particleclass = particleClass;
-			_pool = new ObjectPool(true);
-			_pool.allocate(_particleclass, size);
-			_pool.initialize("reset", []);
+    this.on(ParticleEvent.DIE, this.handleParticleDeath);
+  }
 
-			addEventListener(ParticleEvent.DIE, handleParticleDeath, true);
-		}
+  clear() {
+    while (this.children.length) {
+      const p = this.getChildAt(0);
+      this.removeChild(p);
+      this._pool.object = p;
+    }
+  }
 
-		public function clear():void {
-			while (numChildren) {
-				var p:Particle = Particle(getChildAt(0));
-				removeChild(p);
-				_pool.object = p;
-			}
-		}
+  handleParticleDeath = (e: ParticleEvent) => {
+    const p = e.target;
+    this.removeChild(p);
+    this._pool.object = p;
+  };
 
-		private function handleParticleDeath(e:ParticleEvent):void {
-			var p:Particle = Particle(e.target);
-			removeChild(p);
-			_pool.object = p;
-		}
-
-		public function add():Particle {
-			var p:Particle = _pool.object;
-			addChild(p);
-			return p;
-		}
-
-	}
-
+  add() {
+    const p = this._pool.object as Particle;
+    this.addChild(p);
+    return p;
+  }
+}

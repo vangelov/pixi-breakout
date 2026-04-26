@@ -33,7 +33,7 @@ export class GameObject extends Sprite {
     if (this.parent) this.parent.removeChild(this);
   }
 
-  handleDetach(collection: GameObjectCollection): void {
+  handleDetach(collection: GameObjectCollection) {
     Utils.emitBubblingEvent(
       this,
       GameObjectEvent.DETACH,

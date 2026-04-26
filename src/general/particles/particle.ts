@@ -1,19 +1,18 @@
-import { Container, Graphics } from "pixi.js";
+import { Graphics } from "pixi.js";
 import { ParticleEvent } from "./events/particle-event";
 import { Utils } from "../../utils/math/math-util";
+import gsap from "gsap";
 
-export class Particle extends Container {
-  protected _graphics = new Graphics();
+export class Particle extends Graphics {
   protected _tween: gsap.core.Tween;
   protected _scaleValue = 1;
 
   constructor(lifespan = 2) {
     super();
-    this.addChild(this._graphics);
 
     this._scaleValue = 1;
 
-    this._tween = gsap.to(this._graphics, {
+    this._tween = gsap.to(this, {
       duration: lifespan,
       paused: true,
       onComplete: () => this.die(),
@@ -37,19 +36,19 @@ export class Particle extends Container {
     Utils.emitBubblingEvent(this, ParticleEvent.DIE, new ParticleEvent(this));
   };
 
-  get scaleValue() {
-    return this._scaleValue;
+  get scaleX() {
+    return this.scale.x;
   }
 
-  set scaleValue(value: number) {
-    this._scaleValue = value;
+  set scaleX(value: number) {
+    this.scale.x = value;
+  }
 
-    if (this._scaleValue < 0.5) {
-      this.scale.x = this._scaleValue * 2;
-      this.scale.y = this._scaleValue * 2;
-    } else {
-      this.scale.x = 2 - this._scaleValue * 2;
-      this.scale.y = 2 - this._scaleValue * 2;
-    }
+  get scaleY() {
+    return this.scale.y;
+  }
+
+  set scaleY(value: number) {
+    this.scale.y = value;
   }
 }

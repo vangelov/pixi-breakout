@@ -20,7 +20,7 @@ export class Shaker {
     this._position = new Point();
   }
 
-  shake(powerX: number, powerY: number): void {
+  shake(powerX: number, powerY: number) {
     this._velocity.x += powerX;
     this._velocity.y += powerY;
   }

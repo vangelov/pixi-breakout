@@ -115,7 +115,7 @@ export class ObjectPool {
    * @param C    The class to instantiate for each object in the pool.
    * @param size The number of objects to create.
    */
-  allocate(C: new () => unknown, size: number): void {
+  allocate(C: new () => unknown, size: number) {
     this.deconstruct();
 
     this._obj = C;

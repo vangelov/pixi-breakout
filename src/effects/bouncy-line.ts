@@ -28,7 +28,7 @@ export class BouncyLine extends GameObject {
     this.set(x1, y1, x2, y2);
   }
 
-  set(x1: number, y1: number, x2: number, y2: number): void {
+  set(x1: number, y1: number, x2: number, y2: number) {
     this.pos1.x = x1;
     this.pos1.y = y1;
     this.pos2.x = x2;
