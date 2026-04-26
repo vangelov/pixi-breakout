@@ -17,7 +17,7 @@ export class Rainbow extends Mesh {
     });
   }
 
-  addSegment(x: number, y: number): void {
+  addSegment(x: number, y: number) {
     let seg: Segment | null | undefined = null;
 
     // first, pop off any segments that exceed the maximum trail length

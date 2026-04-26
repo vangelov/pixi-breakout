@@ -24,7 +24,6 @@ export class BallImpactParticle extends Particle {
 
     this._tween.vars.scaleX = 0.1;
     this._tween.vars.scaleY = 0.1;
-
     this._tween.invalidate().restart();
   }
 }

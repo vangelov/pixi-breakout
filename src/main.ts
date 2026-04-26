@@ -19,6 +19,7 @@ import { ParticlePool } from "./general/particles/particle-pool";
 import { BallImpactParticle } from "./effects/particles/ball-impact-particle";
 import { BlockShatterParticle } from "./effects/particles/block-shatter-particle";
 import { ParticleSpawn } from "./general/particles/particle-spawn";
+import { Utils } from "./utils/math/math-util";
 
 export class Main extends Container {
   private _app: Application;
@@ -267,6 +268,7 @@ export class Main extends Container {
     } else {
       this._paddle.scale.x = this._paddle.scale.y = 1;
     }
+
     this._paddle.x = this.mouseX;
 
     const screen_buffer =
@@ -452,6 +454,7 @@ app.stage.eventMode = "static";
 
 await app.init({
   resizeTo: window,
+  antialias: true,
 });
 
 document.getElementById("pixi-container")!.appendChild(app.canvas);

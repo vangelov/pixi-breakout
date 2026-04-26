@@ -25,7 +25,7 @@ export class ObjectPool {
   /**
    * Unlock all ressources for the garbage collector.
    */
-  deconstruct(): void {
+  deconstruct() {
     let node: ObjNode | null = this._head;
     let t: ObjNode | null;
 
@@ -143,7 +143,7 @@ export class ObjectPool {
    * @param func The function's name.
    * @param args The function's arguments.
    */
-  initialize(func: string, args: unknown[]): void {
+  initialize(func: string, args: unknown[]) {
     let n = this._head;
     while (n) {
       (n.data as any)[func].apply(n.data, args); // eslint-disable-line @typescript-eslint/no-explicit-any

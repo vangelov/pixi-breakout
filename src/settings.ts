@@ -74,7 +74,7 @@ export class Settings {
 
   static EFFECT_PADDLE_SMILE = 0;
 
-  static EFFECT_PADDLE_EYE_SIZE = 1;
+  static EFFECT_PADDLE_EYE_SIZE = 100;
 
   static EFFECT_PADDLE_EYE_SEPARATION = 25;
 

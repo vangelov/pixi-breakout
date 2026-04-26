@@ -90,7 +90,7 @@ export class Ball extends GameObject {
     // this._gfx.circle( 0, 0, Ball.SIZE / 2 );
   }
 
-  update(timeDelta = 1): void {
+  update(timeDelta = 1) {
     this.exX = this.x;
     this.exY = this.y;
     super.update(timeDelta);

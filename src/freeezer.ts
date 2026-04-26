@@ -4,7 +4,7 @@ import { Utils } from "./utils/math/math-util";
 export class Freezer {
   private static frozeAt: number;
 
-  public static freeze(): void {
+  public static freeze() {
     this.frozeAt = Utils.getTimer();
   }
 
