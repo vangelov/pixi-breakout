@@ -82,7 +82,7 @@ export class Main extends Container {
 
     this.addChild(this._particles_shatter);
 
-    app.ticker.add(this.handleEnterFrame);
+    this._app.ticker.add(this.handleEnterFrame);
 
     window.addEventListener("keydown", this.handleKeyDown);
 
@@ -156,7 +156,7 @@ export class Main extends Container {
 
     for (let i = 0; i < 80; i++) {
       const block = new Block(
-        app.renderer,
+        this._app.renderer,
         120 + (i % 10) * (Settings.BLOCK_W + 10),
         30 + 47.5 + Math.trunc(i / 10) * (Settings.BLOCK_H + 10),
       );
@@ -439,14 +439,18 @@ export class Main extends Container {
   }
 }
 
-const app = new Application();
-app.stage.eventMode = "static";
+async function run() {
+  const app = new Application();
+  app.stage.eventMode = "static";
 
-await app.init({
-  resizeTo: window,
-  antialias: true,
-});
+  await app.init({
+    resizeTo: window,
+    antialias: true,
+  });
 
-document.getElementById("pixi-container")!.appendChild(app.canvas);
+  document.getElementById("pixi-container")!.appendChild(app.canvas);
 
-app.stage.addChild(new Main(app));
+  app.stage.addChild(new Main(app));
+}
+
+run();
