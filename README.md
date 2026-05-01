@@ -1,3 +1,15 @@
+<p align="center">
+   <a href="https://vangelov.github.io/pixi-breakout/" target="_blank">
+    <img src="screenshot.png" alt="Devices preview" />
+  </a>
+</p>
+
+<div align="center">
+
+[Live version](https://vangelov.github.io/pixi-breakout/)
+
+</div>
+
 ## Pixi Breakout
 
 This project is TypeScript reimplementation of [Juicy Breakout](https://github.com/grapefrukt/juicy-breakout) using Pixi.js.
