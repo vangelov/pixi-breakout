@@ -21,6 +21,7 @@ import { BlockShatterParticle } from "./effects/particles/block-shatter-particle
 import { ParticleSpawn } from "./general/particles/particle-spawn";
 import gsap from "gsap";
 import { SoundManager } from "./sound-manager";
+import { LazyKeyboard } from "./general/lazy-keyboard";
 
 export class Main extends Container {
   private _app: Application;
@@ -43,7 +44,7 @@ export class Main extends Container {
   private _soundBlockHitCounter = 0;
   private _soundLastTimeHit = 0;
 
-  //private _keyboard: LazyKeyboard;
+  private _keyboard = new LazyKeyboard();
   private _background = new Graphics();
   private _useColors = false;
 
@@ -84,8 +85,6 @@ export class Main extends Container {
     app.ticker.add(this.handleEnterFrame);
 
     window.addEventListener("keydown", this.handleKeyDown);
-    // stage.addEventListener(MouseEvent.MOUSE_DOWN, handleMouseToggle);
-    // stage.addEventListener(MouseEvent.MOUSE_UP, handleMouseToggle);
 
     this._timestep.gameSpeed = 1;
 
@@ -93,8 +92,6 @@ export class Main extends Container {
 
     this._background = new Graphics();
     if (this.parent) this.parent.addChildAt(this._background, 0);
-
-    //_keyboard = new LazyKeyboard(stage);
 
     this.updateColorUse();
 
@@ -211,13 +208,13 @@ export class Main extends Container {
       SoundManager.play("music", { loop: true });
     }
 
-    // if (_keyboard.keyIsDown(Keyboard.CONTROL) || _slides.visible) {
-    // 			_timestep.gameSpeed = 0;
-    // 		} else if (_keyboard.keyIsDown(Keyboard.SHIFT)) {
-    // 			_timestep.gameSpeed = .1;
-    // 		} else {
-    // 			_timestep.gameSpeed = 1;
-    // 		}
+    if (this._keyboard.keyIsDown("Control")) {
+      this._timestep.gameSpeed = 0;
+    } else if (this._keyboard.keyIsDown("Shift")) {
+      this._timestep.gameSpeed = 0.1;
+    } else {
+      this._timestep.gameSpeed = 1;
+    }
 
     this._timestep.gameSpeed *= Freezer.multiplier;
 
