@@ -34,10 +34,10 @@ export class Settings {
   static EFFECT_BLOCK_JELLY = true;
   static EFFECT_BOUNCY_LINES_ENABLED = true;
 
-  static SOUND_WALL = false;
-  static SOUND_BLOCK = false;
-  static SOUND_PADDLE = false;
-  static SOUND_MUSIC = false;
+  static SOUND_WALL = true;
+  static SOUND_BLOCK = true;
+  static SOUND_PADDLE = true;
+  static SOUND_MUSIC = true;
 
   static EFFECT_PARTICLE_BALL_COLLISION = true;
 
@@ -58,24 +58,18 @@ export class Settings {
   static EFFECT_BALL_TRAIL_LENGTH = 30;
 
   static EFFECT_SCREEN_SHAKE = true;
-
   static EFFECT_SCREEN_SHAKE_POWER = 0.5;
 
   static EFFECT_FREEZE_DURATION_MS = 0;
-
   static EFFECT_FREEZE_SPEED_MULTIPLIER = 0;
-
   static EFFECT_FREEZE_FADE_IN_MS = 0;
-
   static EFFECT_FREEZE_FADE_OUT_MS = 0;
 
   static EFFECT_PADDLE_FACE = true;
   static EFFECT_PADDLE_LOOK_AT_BALL = true;
 
   static EFFECT_PADDLE_SMILE = 0;
-
   static EFFECT_PADDLE_EYE_SIZE = 100;
-
   static EFFECT_PADDLE_EYE_SEPARATION = 25;
 
   static EFFECT_SCREEN_COLOR_GLITCH = true;
@@ -84,7 +78,6 @@ export class Settings {
   static NUM_BALLS = 1;
 
   static EFFECT_BLOCK_SHATTER_ROTATION = 5;
-
   static EFFECT_BLOCK_SHATTER_FORCE = 2;
 
   static EFFECT_BOUNCY_LINES_STRENGHT = 10;

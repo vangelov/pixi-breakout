@@ -116,8 +116,6 @@ export class Paddle extends Block {
       t = 0.1 + ((Utils.clamp(how_much, 2, 0) - 1.0) / 1.0) * 0.9;
       this._face.mouth.scale.y = t;
     }
-
-    console.log("t", this._face.mouth.scale.y);
   }
 
   render(color: number) {

@@ -19,7 +19,8 @@ import { ParticlePool } from "./general/particles/particle-pool";
 import { BallImpactParticle } from "./effects/particles/ball-impact-particle";
 import { BlockShatterParticle } from "./effects/particles/block-shatter-particle";
 import { ParticleSpawn } from "./general/particles/particle-spawn";
-import { Utils } from "./utils/math/math-util";
+import gsap from "gsap";
+import { SoundManager } from "./sound-manager";
 
 export class Main extends Container {
   private _app: Application;
@@ -55,31 +56,20 @@ export class Main extends Container {
 
   constructor(app: Application) {
     super();
-    // SoundManager.init();
-    // SoundManager.soundControl.addEventListener(Event.INIT, handleInit);
-    // _preload = new TXT();
-    // _preload.setText("Loading sounds...");
-    // addChild(_preload);
-
     this._app = app;
 
-    setTimeout(() => {
-      this.handleInit();
-    }, 500);
+    this.init();
   }
 
-  private async handleInit() {
+  private async init() {
+    await SoundManager.init();
+
     this._app.stage.on("pointermove", (e) => {
       this.mouseX = e.global.x;
       this.mouseY = e.global.y;
     });
     this._app.stage.on("pointerdown", this.handleMouseToggle);
     this._app.stage.on("pointerup", this.handleMouseToggle);
-
-    // removeChild(_preload);
-
-    // _particles_confetti = new ParticlePool(ConfettiParticle);
-    // addChild(_particles_confetti);
 
     this._blocks = new GameObjectCollection();
     this._blocks.on(JuicyEvent.BLOCK_DESTROYED, this.handleBlockDestroyed);
@@ -114,13 +104,6 @@ export class Main extends Container {
     this._background = new Graphics();
     if (this.parent) this.parent.addChildAt(this._background, 0);
 
-    // _toggler = new Toggler(Settings);
-    // parent.addChild(_toggler);
-
-    // _slides = new Slides();
-    // _slides.visible = false;
-    // parent.addChild(_slides);
-
     //_keyboard = new LazyKeyboard(stage);
 
     this.updateColorUse();
@@ -136,7 +119,6 @@ export class Main extends Container {
       Settings.EFFECT_SCREEN_COLOR_GLITCH &&
       this._backgroundGlitchForce > 0.01
     ) {
-      console.log("g");
       this._background.fill(
         ((Settings.COLOR_BACKGROUND * (3 * Math.random())) >>> 0) & 0xffffff,
       );
@@ -179,7 +161,7 @@ export class Main extends Container {
     this._balls.clear();
     this._lines.clear();
 
-    // this._particles_impact.clear();
+    this._particles_impact.clear();
 
     for (let j = 0; j < Settings.NUM_BALLS; j++) {
       this.addBall();
@@ -234,11 +216,11 @@ export class Main extends Container {
       this.updateColorUse();
     }
 
-    // if (!Settings.SOUND_MUSIC) {
-    //   SoundManager.soundControl.stopSound("music-0");
-    // } else if (!SoundManager.soundControl.getSound("music-0").isPlaying) {
-    //   SoundManager.play("music");
-    // }
+    if (!Settings.SOUND_MUSIC) {
+      SoundManager.stop("music");
+    } else if (!SoundManager.isPlaying("music")) {
+      SoundManager.play("music", { loop: true });
+    }
 
     // if (_keyboard.keyIsDown(Keyboard.CONTROL) || _slides.visible) {
     // 			_timestep.gameSpeed = 0;
@@ -250,7 +232,7 @@ export class Main extends Container {
 
     this._timestep.gameSpeed *= Freezer.multiplier;
 
-    //GTween.timeScaleAll = _timestep.gameSpeed;
+    gsap.globalTimeline.timeScale(this._timestep.gameSpeed);
 
     this.drawBackground();
 
@@ -431,16 +413,17 @@ export class Main extends Container {
         // );
       }
     } else if (e.block) {
-      // SoundManager.play("ball-block");
       this._soundBlockHitCounter++;
 
       if (this._soundLastTimeHit > 60) this._soundBlockHitCounter = 0;
 
       this._soundLastTimeHit = 0;
-      //if (Settings.SOUND_BLOCK)
-      // SoundManager.playSoundId("ball-block", _soundBlockHitCounter);
+      if (Settings.SOUND_BLOCK) {
+        const id = 1 + (this._soundBlockHitCounter % 12);
+        SoundManager.play(`pling${id}`);
+      }
     } else {
-      //if (Settings.SOUND_WALL) SoundManager.play("ball-wall");
+      if (Settings.SOUND_WALL) SoundManager.play("ball-wall");
     }
   };
 
