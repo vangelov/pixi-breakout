@@ -1,6 +1,6 @@
 <p align="center">
    <a href="https://vangelov.github.io/pixi-breakout/" target="_blank">
-    <img src="screenshot.png" alt="Devices preview" />
+    <img src="screenshot-2.png" alt="Devices preview" />
   </a>
 </p>
 
