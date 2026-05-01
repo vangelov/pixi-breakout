@@ -27,6 +27,7 @@ export class SoundManager {
   }
 
   static play(id: string, options?: PlayOptions) {
+    console.log("play", id);
     const asset = Assets.get<Sound>(id);
     asset.play(options);
   }

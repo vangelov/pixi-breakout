@@ -25,31 +25,27 @@ import { SoundManager } from "./sound-manager";
 export class Main extends Container {
   private _app: Application;
 
-  private _blocks: GameObjectCollection;
-  private _balls: GameObjectCollection;
-  private _lines: GameObjectCollection;
-  private _timestep: Timestep;
-  private _screenshake: Shaker;
+  private _blocks = new GameObjectCollection();
+  private _balls = new GameObjectCollection();
+  private _lines = new GameObjectCollection();
+  private _timestep = new Timestep();
+  private _screenshake = new Shaker(this);
 
   private _paddle: Paddle;
 
-  private _particles_impact: ParticlePool;
-  private _particles_shatter: ParticlePool;
+  private _particles_impact = new ParticlePool(BallImpactParticle);
+  private _particles_shatter = new ParticlePool(BlockShatterParticle);
 
-  private _mouseDown: boolean;
-  private _mouseVector: Point;
+  private _mouseDown = false;
+  private _mouseVector = new Point();
 
-  //   //private _toggler: Toggler;
-
-  private _backgroundGlitchForce: number;
-  private _soundBlockHitCounter: number;
-  private _soundLastTimeHit: number;
+  private _backgroundGlitchForce = 0;
+  private _soundBlockHitCounter = 0;
+  private _soundLastTimeHit = 0;
 
   //private _keyboard: LazyKeyboard;
-  //private _slides: Slides;
-  private _background: Graphics;
-  private _useColors: boolean;
-  //private _preload: TXT;
+  private _background = new Graphics();
+  private _useColors = false;
 
   private mouseX = 0;
   private mouseY = 0;
@@ -57,6 +53,7 @@ export class Main extends Container {
   constructor(app: Application) {
     super();
     this._app = app;
+    this._paddle = new Paddle(app.renderer);
 
     this.init();
   }
@@ -71,33 +68,26 @@ export class Main extends Container {
     this._app.stage.on("pointerdown", this.handleMouseToggle);
     this._app.stage.on("pointerup", this.handleMouseToggle);
 
-    this._blocks = new GameObjectCollection();
     this._blocks.on(JuicyEvent.BLOCK_DESTROYED, this.handleBlockDestroyed);
     this.addChild(this._blocks);
 
     // we want to draw these under the ball, that's why it's added here
-    this._lines = new GameObjectCollection();
     this.addChild(this._lines);
 
-    this._balls = new GameObjectCollection();
     this._balls.on(JuicyEvent.BALL_COLLIDE, this.handleBallCollide);
     this.addChild(this._balls);
 
-    this._particles_impact = new ParticlePool(BallImpactParticle);
     this.addChild(this._particles_impact);
 
-    this._particles_shatter = new ParticlePool(BlockShatterParticle);
     this.addChild(this._particles_shatter);
 
     app.ticker.add(this.handleEnterFrame);
-    // stage.addEventListener(KeyboardEvent.KEY_DOWN, handleKeyDown);
+
+    window.addEventListener("keydown", this.handleKeyDown);
     // stage.addEventListener(MouseEvent.MOUSE_DOWN, handleMouseToggle);
     // stage.addEventListener(MouseEvent.MOUSE_UP, handleMouseToggle);
 
-    this._timestep = new Timestep();
     this._timestep.gameSpeed = 1;
-
-    this._mouseVector = new Point();
 
     this._screenshake = new Shaker(this);
 
@@ -190,7 +180,6 @@ export class Main extends Container {
       ),
     );
 
-    this._paddle = new Paddle(app.renderer);
     this._blocks.add(this._paddle);
   }
 
@@ -362,6 +351,27 @@ export class Main extends Container {
     }
   };
 
+  handleKeyDown = (e: KeyboardEvent) => {
+    console.log("test", e);
+
+    if (e.code == "Space") this.reset();
+    if (e.code == "KeyB") this.addBall();
+
+    if (e.code == "KeyP") {
+      const b = this._balls.collection[0] as Ball;
+      ParticleSpawn.burst(
+        b.x,
+        b.y,
+        10,
+        360,
+        (Math.atan2(b.velocityY, b.velocityX) * 180) / Math.PI,
+        100,
+        0.1,
+        this._particles_impact,
+      );
+    }
+  };
+
   handleBallCollide = (e: JuicyEvent) => {
     if (e.block != null && e.block !== this._paddle)
       this._backgroundGlitchForce = 0.05;
@@ -398,7 +408,7 @@ export class Main extends Container {
 
     // wall collision
     if (e.block instanceof Paddle) {
-      // if (Settings.SOUND_PADDLE) SoundManager.play("ball-paddle");
+      if (Settings.SOUND_PADDLE) SoundManager.play("ball-paddle");
 
       if (Settings.EFFECT_PARTICLE_PADDLE_COLLISION && e.ball) {
         // ParticleSpawn.burst(
